@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>别卡住挑战</title>
+
+<style>
+body{
+    margin:0;
+    font-family:"微软雅黑";
+    background: linear-gradient(180deg,#dff6ff,#eaffea);
+    display:flex;
+    justify-content:center;
+}
+
+.app{
+    width:100%;
+    max-width:420px;
+    height:100vh;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    padding:20px;
+    box-sizing:border-box;
+}
+
+.title{
+    text-align:center;
+    font-size:22px;
+    color:#4aa3df;
+    margin-top:10px;
+}
+
+.card{
+    background:white;
+    border-radius:20px;
+    padding:25px;
+    text-align:center;
+    box-shadow:0 10px 30px rgba(0,0,0,0.08);
+}
+
+.sentence{
+    font-size:20px;
+    color:#333;
+    margin-bottom:15px;
+}
+
+.wave{
+    height:60px;
+    margin:10px 0;
+    display:flex;
+    justify-content:center;
+    align-items:end;
+}
+
+.bar{
+    width:6px;
+    margin:0 2px;
+    background:#4aa3df;
+    border-radius:3px;
+    animation:wave 1s infinite ease-in-out;
+}
+
+.bar:nth-child(2){animation-delay:0.2s}
+.bar:nth-child(3){animation-delay:0.4s}
+.bar:nth-child(4){animation-delay:0.6s}
+.bar:nth-child(5){animation-delay:0.8s}
+
+@keyframes wave{
+    0%,100%{height:10px;}
+    50%{height:40px;}
+}
+
+.result{
+    font-size:16px;
+    color:#666;
+    margin-top:10px;
+    white-space:pre-line;
+}
+
+.btn{
+    margin-top:20px;
+    padding:15px;
+    background:#4aa3df;
+    color:white;
+    border:none;
+    border-radius:15px;
+    font-size:18px;
+}
+
+.footer{
+    text-align:center;
+    font-size:12px;
+    color:#aaa;
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+<div class="title">别卡住挑战</div>
+
+<div class="card">
+    <div class="sentence" id="sentence">点击开始挑战</div>
+
+    <div class="wave" id="wave" style="display:none;">
+        <div class="bar"></div>
+        <div class="bar"></div>
+        <div class="bar"></div>
+        <div class="bar"></div>
+        <div class="bar"></div>
+    </div>
+
+    <div class="result" id="result">看看你能不能稳住这一句</div>
+
+    <button class="btn" onclick="startGame()">开始说话</button>
+</div>
+
+<div class="footer">开口不卡，状态稳住</div>
+
+</div>
+
+<script>
+const sentences = [
+    "我觉得这个方案可以再优化一下",
+    "不好意思我刚刚有点紧张",
+    "这个问题我可以补充说明一下",
+    "其实我还有一个更好的想法",
+    "刚刚那句话我想重新说一遍"
+];
+
+let recognition;
+let startTime;
+
+function startGame(){
+    const sentence = sentences[Math.floor(Math.random()*sentences.length)];
+    document.getElementById("sentence").innerText = sentence;
+    document.getElementById("result").innerText = "正在听你说...";
+    document.getElementById("wave").style.display = "flex";
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if(!SpeechRecognition){
+        alert("你的浏览器不支持语音识别，请使用Chrome");
+        return;
+    }
+
+    recognition = new SpeechRecognition();
+    recognition.lang = "zh-CN";
+    recognition.interimResults = false;
+
+    startTime = Date.now();
+
+    recognition.onresult = function(event){
+        let transcript = event.results[0][0].transcript;
+        evaluate(transcript, sentence);
+    };
+
+    recognition.start();
+}
+
+function evaluate(input, target){
+    let timeUsed = (Date.now() - startTime) / 1000;
+    let similarity = compare(input, target);
+
+    let result = "";
+
+    if(similarity > 0.8 && timeUsed < 4){
+        result = "🔥 稳住了！表达丝滑\n";
+    }else if(similarity > 0.6){
+        result = "🙂 有点卡，但还行\n";
+    }else{
+        result = "😵 完全卡住了\n";
+    }
+
+    document.getElementById("result").innerText =
+        result +
+        "相似度：" + similarity.toFixed(2) +
+        "\n用时：" + timeUsed.toFixed(1) + "秒";
+}
+
+function compare(a,b){
+    let same = 0;
+    for(let i=0;i<Math.min(a.length,b.length);i++){
+        if(a[i] === b[i]) same++;
+    }
+    return same / b.length;
+}
+</script>
+
+</body>
+</html>
